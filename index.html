@@ -4,32 +4,22 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
+        <title>WebGIS Chi Lăng - Vương Thị Kim Anh</title>
+
         <link rel="stylesheet" href="leaflet.css">
         <link rel="stylesheet" href="L.Control.Layers.Tree.css">
         <link rel="stylesheet" href="qgis2web.css">
         <link rel="stylesheet" href="fontawesome-all.min.css">
         <link rel="stylesheet" href="leaflet.photon.css">
+
         <style>
-        html, body, #map {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            margin: 0;
-        }
-        h1 {
-            position: absolute;
-            z-index: 1000;
-            width: 100%;
-            background: rgba(255,255,255,0.8);
-            margin: 0;
-            padding: 10px;
-            font-size: 18px;
-            text-align: center;
-        }
+            html, body, #map { width: 100%; height: 100%; padding: 0; margin: 0; }
+            h1 { 
+                position: absolute; z-index: 1000; width: 100%; 
+                background: rgba(255,255,255,0.8); text-align: center; 
+                margin: 0; padding: 10px; font-size: 18px; font-family: sans-serif;
+            }
         </style>
-        <title>WebGIS Chi Lăng - Vương Thị Kim Anh</title>
     </head>
     <body>
         <h1>WebGIS Q2 midterm2 của Vương Thị Kim Anh - 2106080018</h1>
@@ -48,7 +38,6 @@
         <script src="leaflet.photon.js"></script>
         
         <script src="Chilang_Pop_dens_0.js"></script>
-        <script src="chi_lang_pop_1.js"></script>
         <script src="Chilang_District_4.js"></script>
 
         <script>
@@ -56,64 +45,48 @@
             zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[21.488, 106.401],[21.826, 106.846]]);
         
-        var hash = new L.Hash(map);
-
-        // Lớp nền bản đồ
+        // Lớp nền OSM
         var layer_OSM = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             opacity: 1.0,
-            attribution: '© OpenStreetMap contributors',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 19
+            attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Hàm thiết lập màu sắc cho Mật độ dân số (Dựa theo ảnh image_01ad2c.jpg)
-        function style_Chilang_Pop(feature) {
+        // Định dạng màu sắc dựa trên mật độ dân số
+        function style_Pop(feature) {
             var d = feature.properties['Density'];
             return {
-                opacity: 1,
-                color: 'rgba(35,35,35,1.0)',
-                weight: 1.0,
-                fill: true,
-                fillOpacity: 0.8,
+                opacity: 1, color: 'rgba(35,35,35,1.0)', weight: 1.0, 
+                fill: true, fillOpacity: 0.8,
                 fillColor: d > 1000 ? '#800026' :
                            d > 500  ? '#bd0026' :
                            d > 200  ? '#e31a1c' :
                            d > 100  ? '#fc4e2a' :
                            d > 50   ? '#fd8d3c' :
-                           d > 20   ? '#feb24c' :
-                           d > 10   ? '#fed976' :
                                       '#ffeda0'
             };
         }
 
         // Hiển thị lớp Mật độ dân số
-        var layer_Chilang_Pop_dens_0 = new L.geoJson(json_Chilang_Pop_dens_0, {
-            style: style_Chilang_Pop,
+        var layer_Chilang_Pop = new L.geoJson(json_Chilang_Pop_dens_0, {
+            style: style_Pop,
             onEachFeature: function (feature, layer) {
-                var popupContent = '<b>Xã:</b> ' + (feature.properties['NAME_3'] || 'N/A') + 
-                                   '<br><b>Mật độ:</b> ' + (feature.properties['Density'] || '0') + ' người/km²';
-                layer.bindPopup(popupContent);
+                var popup = '<b>Xã:</b> ' + (feature.properties['NAME_3'] || 'N/A') + 
+                            '<br><b>Mật độ:</b> ' + feature.properties['Density'];
+                layer.bindPopup(popup);
             }
         }).addTo(map);
 
-        // Hiển thị viền huyện
-        var layer_Chilang_District_4 = new L.geoJson(json_Chilang_District_4, {
-            style: {
-                color: 'red',
-                weight: 3,
-                fillOpacity: 0,
-                interactive: false
-            }
+        // Hiển thị viền huyện (Polygon)
+        var layer_Chilang_District = new L.geoJson(json_Chilang_District_4, {
+            style: { color: 'red', weight: 3, fillOpacity: 0 }
         }).addTo(map);
 
-        // Chú thích lớp bản đồ
+        // Menu bật/tắt lớp
         var overlaysTree = [
-            {label: "<b>Viền huyện Chi Lăng</b>", layer: layer_Chilang_District_4},
-            {label: "<b>Mật độ dân số</b>", layer: layer_Chilang_Pop_dens_0}
+            {label: "<b>Viền huyện</b>", layer: layer_Chilang_District},
+            {label: "<b>Mật độ dân số</b>", layer: layer_Chilang_Pop}
         ];
-        L.control.layers.tree(null, overlaysTree, {collapsed: false}).addTo(map);
+        L.control.layers.tree(null, overlaysTree).addTo(map);
         </script>
     </body>
 </html>
