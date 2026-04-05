@@ -7,10 +7,6 @@
         <title>WebGIS Chi Lăng - Vương Thị Kim Anh</title>
 
         <link rel="stylesheet" href="leaflet.css">
-        <link rel="stylesheet" href="L.Control.Layers.Tree.css">
-        <link rel="stylesheet" href="qgis2web.css">
-        <link rel="stylesheet" href="fontawesome-all.min.css">
-
         <style>
             html, body, #map { width: 100%; height: 100%; padding: 0; margin: 0; }
             h1 { 
@@ -18,23 +14,17 @@
                 background: rgba(255,255,255,0.8); text-align: center; 
                 margin: 0; padding: 10px; font-size: 18px; font-family: sans-serif;
             }
-            /* Style cho bảng chú thích (Legend) */
-            .info.legend {
-                padding: 10px; font: 14px/18px Arial, Helvetica, sans-serif;
-                background: white; background: rgba(255,255,255,0.8);
-                box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px;
-                color: #555;
+            /* Style cho Bảng chú thích (Legend) */
+            .legend {
+                padding: 10px; font: 14px Arial; background: rgba(255,255,255,0.9);
+                box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; line-height: 20px;
             }
-            .info.legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+            .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.8; }
             
-            /* Style cho nhãn tên xã */
-            .leaflet-tooltip.mylabel {
-                background-color: transparent;
-                border: transparent;
-                box-shadow: none;
-                font-weight: bold;
-                color: black;
-                text-shadow: 1px 1px 2px white;
+            /* Style cho Tên xã (Label) */
+            .leaflet-tooltip.label-xa {
+                background: transparent; border: none; box-shadow: none;
+                font-weight: bold; color: black; text-shadow: 1px 1px 2px white;
             }
         </style>
     </head>
@@ -42,15 +32,7 @@
         <h1>WebGIS Q2 midterm2 của Vương Thị Kim Anh - 2106080018</h1>
         <div id="map"></div>
 
-        <script src="qgis2web_expressions.js"></script>
         <script src="leaflet.js"></script>
-        <script src="L.Control.Layers.Tree.min.js"></script>
-        <script src="leaflet.rotatedMarker.js"></script>
-        <script src="Autolinker.min.js"></script>
-        <script src="rbush.min.js"></script>
-        <script src="labelgun.min.js"></script>
-        <script src="labels.js"></script>
-        
         <script src="Chilang_Pop_dens_0.js"></script>
         <script src="Chilang_District_4.js"></script>
 
@@ -59,11 +41,9 @@
             zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[21.488, 106.401],[21.826, 106.846]]);
         
-        var layer_OSM = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            opacity: 1.0, attribution: '© OpenStreetMap'
-        }).addTo(map);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // Hàm lấy màu chuẩn theo dải mật độ dân số
+        // Hàm định nghĩa dải màu
         function getColor(d) {
             return d > 1000 ? '#800026' :
                    d > 500  ? '#bd0026' :
@@ -71,55 +51,44 @@
                    d > 100  ? '#fc4e2a' :
                    d > 50   ? '#fd8d3c' :
                    d > 20   ? '#feb24c' :
-                   d > 10   ? '#fed976' :
                               '#ffeda0';
         }
 
-        function style_Pop(feature) {
-            return {
-                opacity: 1, color: 'rgba(35,35,35,1.0)', weight: 1.0, 
-                fill: true, fillOpacity: 0.8,
-                fillColor: getColor(feature.properties['Density'])
-            };
-        }
-
-        // Lớp Mật độ dân số có nhãn tên xã
-        var layer_Chilang_Pop = new L.geoJson(json_Chilang_Pop_dens_0, {
-            style: style_Pop,
+        // Lớp dữ liệu dân số + Hiện tên xã
+        var layer_Pop = L.geoJson(json_Chilang_Pop_dens_0, {
+            style: function(feature) {
+                return {
+                    fillColor: getColor(feature.properties['Density']),
+                    weight: 1, opacity: 1, color: 'white', fillOpacity: 0.7
+                };
+            },
             onEachFeature: function (feature, layer) {
-                // Hiện tên xã (NAME_3) khi di chuột hoặc hiện cố định
+                // Ép hiển thị tên xã từ cột NAME_3
                 if (feature.properties && feature.properties['NAME_3']) {
                     layer.bindTooltip(feature.properties['NAME_3'], {
-                        permanent: true, 
-                        direction: 'center', 
-                        className: 'mylabel'
-                    });
+                        permanent: true, direction: 'center', className: 'label-xa'
+                    }).openTooltip();
                 }
-                var popup = '<b>Xã:</b> ' + feature.properties['NAME_3'] + 
-                            '<br><b>Mật độ:</b> ' + feature.properties['Density'] + ' người/km²';
-                layer.bindPopup(popup);
             }
         }).addTo(map);
 
-        // --- THÊM BẢNG CHÚ THÍCH (LEGEND) ---
+        // Tạo Legend thủ công để tránh lỗi 404 layers.png
         var legend = L.control({position: 'bottomright'});
         legend.onAdd = function (map) {
-            var div = L.DomUtil.create('div', 'info legend'),
-                grades = [0, 10, 20, 50, 100, 200, 500, 1000],
-                labels = ['<strong>Population density</strong><br>'];
-
+            var div = L.DomUtil.create('div', 'legend'),
+                grades = [0, 20, 50, 100, 200, 500, 1000];
+            div.innerHTML = '<b>Mật độ dân số</b><br>';
             for (var i = 0; i < grades.length; i++) {
-                div.innerHTML +=
-                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                div.innerHTML += '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
                     grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
             }
             return div;
         };
         legend.addTo(map);
 
-        // Lớp viền huyện
-        var layer_Chilang_District = new L.geoJson(json_Chilang_District_4, {
-            style: { color: 'red', weight: 3, fillOpacity: 0, interactive: false }
+        // Viền huyện
+        L.geoJson(json_Chilang_District_4, {
+            style: { color: 'red', weight: 2, fillOpacity: 0 }
         }).addTo(map);
         </script>
     </body>
