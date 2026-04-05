@@ -6,11 +6,11 @@
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
-        <link rel="stylesheet" href="css/qgis2web.css">
-        <link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="leaflet.css">
+        <link rel="stylesheet" href="L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="qgis2web.css">
+        <link rel="stylesheet" href="fontawesome-all.min.css">
+        <link rel="stylesheet" href="leaflet.photon.css">
         <style>
         html, body, #map {
             width: 100%;
@@ -25,30 +25,31 @@
             background: rgba(255,255,255,0.8);
             margin: 0;
             padding: 10px;
-            font-size: 20px;
+            font-size: 18px;
+            text-align: center;
         }
         </style>
-        <title>WebGIS Q2 midterm2 - Vương Thị Kim Anh</title>
+        <title>WebGIS Chi Lăng - Vương Thị Kim Anh</title>
     </head>
     <body>
-        <h1 style="text-align: center;">WebGIS Q2 midterm2 của Vương Thị Kim Anh - 2106080018</h1>
+        <h1>WebGIS Q2 midterm2 của Vương Thị Kim Anh - 2106080018</h1>
         <div id="map"></div>
 
-        <script src="js/qgis2web_expressions.js"></script>
-        <script src="js/leaflet.js"></script>
-        <script src="js/L.Control.Layers.Tree.min.js"></script>
-        <script src="js/leaflet.rotatedMarker.js"></script>
-        <script src="js/leaflet.pattern.js"></script>
-        <script src="js/leaflet-hash.js"></script>
-        <script src="js/Autolinker.min.js"></script>
-        <script src="js/rbush.min.js"></script>
-        <script src="js/labelgun.min.js"></script>
-        <script src="js/labels.js"></script>
-        <script src="js/leaflet.photon.js"></script>
+        <script src="qgis2web_expressions.js"></script>
+        <script src="leaflet.js"></script>
+        <script src="L.Control.Layers.Tree.min.js"></script>
+        <script src="leaflet.rotatedMarker.js"></script>
+        <script src="leaflet.pattern.js"></script>
+        <script src="leaflet-hash.js"></script>
+        <script src="Autolinker.min.js"></script>
+        <script src="rbush.min.js"></script>
+        <script src="labelgun.min.js"></script>
+        <script src="labels.js"></script>
+        <script src="leaflet.photon.js"></script>
         
-        <script src="data/Chilang_Pop_dens_0.js"></script>
-        <script src="data/chi_lang_pop_1.js"></script>
-        <script src="data/Chilang_District_4.js"></script>
+        <script src="Chilang_Pop_dens_0.js"></script>
+        <script src="chi_lang_pop_1.js"></script>
+        <script src="Chilang_District_4.js"></script>
 
         <script>
         var map = L.map('map', {
@@ -56,71 +57,63 @@
         }).fitBounds([[21.488, 106.401],[21.826, 106.846]]);
         
         var hash = new L.Hash(map);
-        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
 
-        // 1. THIẾT LẬP LỚP NỀN STREET (OSM) - ĐỂ Z-INDEX THẤP (300)
-        map.createPane('pane_OpenStreetMap');
-        map.getPane('pane_OpenStreetMap').style.zIndex = 300;
+        // Lớp nền bản đồ
         var layer_OSM = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            pane: 'pane_OpenStreetMap',
             opacity: 1.0,
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
         }).addTo(map);
 
-        // 2. HÀM STYLE CHO POLYGON DÂN SỐ (Dựa trên cột Density)
-        function style_Chilang_Pop_dens(feature) {
+        // Hàm thiết lập màu sắc cho Mật độ dân số (Dựa theo ảnh image_01ad2c.jpg)
+        function style_Chilang_Pop(feature) {
             var d = feature.properties['Density'];
             return {
-                pane: 'pane_Chilang_Pop_dens_0',
                 opacity: 1,
-                color: 'rgba(239,35,35,1.0)',
+                color: 'rgba(35,35,35,1.0)',
                 weight: 1.0,
                 fill: true,
-                fillOpacity: 0.7,
-                fillColor: d > 450 ? '#67000d' :
-                           d > 186 ? '#d32020' :
-                           d > 104 ? '#fb7050' :
-                           d > 58  ? '#fcbeac' :
-                                     '#fff5f0'
+                fillOpacity: 0.8,
+                fillColor: d > 1000 ? '#800026' :
+                           d > 500  ? '#bd0026' :
+                           d > 200  ? '#e31a1c' :
+                           d > 100  ? '#fc4e2a' :
+                           d > 50   ? '#fd8d3c' :
+                           d > 20   ? '#feb24c' :
+                           d > 10   ? '#fed976' :
+                                      '#ffeda0'
             };
         }
 
-        // 3. HIỂN THỊ LỚP POLYGON - ĐỂ Z-INDEX CAO (400)
-        map.createPane('pane_Chilang_Pop_dens_0');
-        map.getPane('pane_Chilang_Pop_dens_0').style.zIndex = 400;
-
+        // Hiển thị lớp Mật độ dân số
         var layer_Chilang_Pop_dens_0 = new L.geoJson(json_Chilang_Pop_dens_0, {
-            pane: 'pane_Chilang_Pop_dens_0',
-            style: style_Chilang_Pop_dens,
+            style: style_Chilang_Pop,
             onEachFeature: function (feature, layer) {
-                var popupContent = 'Mật độ dân số: ' + feature.properties['Density'];
+                var popupContent = '<b>Xã:</b> ' + (feature.properties['NAME_3'] || 'N/A') + 
+                                   '<br><b>Mật độ:</b> ' + (feature.properties['Density'] || '0') + ' người/km²';
                 layer.bindPopup(popupContent);
             }
         }).addTo(map);
 
-        // 4. HIỂN THỊ VIỀN HUYỆN (Chilang District)
-        map.createPane('pane_Chilang_District_4');
-        map.getPane('pane_Chilang_District_4').style.zIndex = 405;
+        // Hiển thị viền huyện
         var layer_Chilang_District_4 = new L.geoJson(json_Chilang_District_4, {
-            pane: 'pane_Chilang_District_4',
-            style: { color: 'red', weight: 2, fillOpacity: 0 }
+            style: {
+                color: 'red',
+                weight: 3,
+                fillOpacity: 0,
+                interactive: false
+            }
         }).addTo(map);
 
-        // 5. THANH TÌM KIẾM PHOTON
-        var photonControl = L.control.photon({
-            url: 'https://nominatim.openstreetmap.org/search?format=geojson&',
-            position: 'topleft',
-            includePosition: true
-        }).addTo(map);
-
-        // 6. BẢNG CHÚ GIẢI (Layer Tree)
+        // Chú thích lớp bản đồ
         var overlaysTree = [
-            {label: "Viền huyện Chi Lăng", layer: layer_Chilang_District_4},
-            {label: "Mật độ dân số", layer: layer_Chilang_Pop_dens_0},
-            {label: "Bản đồ nền Street", layer: layer_OSM}
+            {label: "<b>Viền huyện Chi Lăng</b>", layer: layer_Chilang_District_4},
+            {label: "<b>Mật độ dân số</b>", layer: layer_Chilang_Pop_dens_0}
         ];
-        L.control.layers.tree(null, overlaysTree).addTo(map);
-
+        L.control.layers.tree(null, overlaysTree, {collapsed: false}).addTo(map);
         </script>
     </body>
 </html>
